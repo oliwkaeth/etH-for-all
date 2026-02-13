@@ -1,0 +1,249 @@
+[config]
+default_to_workspace = false
+skip_core_tasks      = true
+skip_crate_env_info  = true
+skip_git_env_info    = true
+skip_rust_env_info   = true
+
+[env]
+CHAIN             = "all"
+NODE_COMPILE_ARGS = "--locked -p darwinia --features"
+
+# Checks.
+
+[tasks.fmt]
+args      = ["fmt"]
+command   = "cargo"
+toolchain = "nightly"
+
+[tasks.clippy]
+args    = ["--all-features", "clippy"]
+command = "cargo"
+env     = { "SKIP_WASM_BUILD" = "1" }
+
+[tasks.c]
+alias = "clippy"
+
+# Build nodes.
+
+[tasks.build-node]
+args = [
+	"${CHAIN}-runtime",
+	"@@split(EXTRA_ARGS, )",
+	"@@split(NODE_COMPILE_ARGS, )",
+	"build",
+]
+command = "cargo"
+
+[tasks.bn]
+alias = "build-node"
+
+[tasks.build-crab]
+env    = { "CHAIN" = "crab" }
+extend = "build-node"
+
+[tasks.bc]
+alias = "build-crab"
+
+[tasks.build-darwinia]
+env    = { "CHAIN" = "darwinia" }
+extend = "build-node"
+
+[tasks.bd]
+alias = "build-darwinia"
+
+# Build release nodes.
+
+[tasks.build-release-node]
+env    = { "EXTRA_ARGS" = "-r" }
+extend = "build-node"
+
+[tasks.brn]
+alias = "build-release-node"
+
+[tasks.build-release-crab]
+env    = { "CHAIN" = "crab", EXTRA_ARGS = "-r" }
+extend = "build-node"
+
+[tasks.brc]
+alias = "build-release-crab"
+
+[tasks.build-release-darwinia]
+env    = { "CHAIN" = "darwinia", EXTRA_ARGS = "-r" }
+extend = "build-node"
+
+[tasks.brd]
+alias = "build-release-darwinia"
+
+# Build benchmark nodes.
+
+[tasks.build-benchmark]
+env    = { "EXTRA_ARGS" = "--features runtime-benchmarks -r" }
+extend = "build-node"
+
+[tasks.bb]
+alias = "build-benchmark"
+
+[tasks.build-benchmark-crab]
+env    = { "CHAIN" = "crab", "EXTRA_ARGS" = "--features runtime-benchmarks -r" }
+extend = "build-node"
+
+[tasks.bbc]
+alias = "build-benchmark-crab"
+
+[tasks.build-benchmark-darwinia]
+env    = { "CHAIN" = "darwinia", "EXTRA_ARGS" = "--features runtime-benchmarks -r" }
+extend = "build-node"
+
+[tasks.bbd]
+alias = "build-benchmark-darwinia"
+
+# Run dev nodes.
+
+# This can not be used directly, as it requires a chain to be specified.
+[tasks.run-dev]
+args = [
+	"${CHAIN}-dev",
+	"${CHAIN}-runtime",
+	"--",
+	"--alice",
+	"--unsafe-force-node-key-generation",
+	"--chain",
+	"--collator",
+	"--rpc-cors",
+	"--rpc-methods",
+	"--tmp",
+	"--unsafe-rpc-external",
+	"@@split(EXTRA_ARGS, )",
+	"@@split(NODE_COMPILE_ARGS, )",
+	"all",
+	"run",
+	"unsafe",
+]
+command = "cargo"
+
+[tasks.run-dev-crab]
+env    = { "CHAIN" = "crab" }
+extend = "run-dev"
+
+[tasks.rdc]
+alias = "run-dev-crab"
+
+[tasks.run-dev-darwinia]
+env    = { "CHAIN" = "darwinia" }
+extend = "run-dev"
+
+[tasks.rdd]
+alias = "run-dev-darwinia"
+
+# Run release dev nodes.
+
+# This can not be used directly, as it requires a chain to be specified.
+[tasks.run-release]
+env    = { "EXTRA_ARGS" = "-r" }
+extend = "run-dev"
+
+[tasks.run-release-dev-crab]
+env    = { "CHAIN" = "crab", "EXTRA_ARGS" = "-r" }
+extend = "run-dev"
+
+[tasks.rrdc]
+alias = "run-release-dev-crab"
+
+[tasks.run-release-dev-darwinia]
+env    = { "CHAIN" = "darwinia", "EXTRA_ARGS" = "-r" }
+extend = "run-dev"
+
+[tasks.rrdd]
+alias = "run-release-dev-darwinia"
+
+# Run benchmark nodes.
+
+# This can not be used directly, as it requires a chain to be specified.
+[tasks.run-benchmark]
+args = [
+	"${CHAIN}-dev",
+	"${CHAIN}-runtime",
+	"*",
+	"*",
+	"--",
+	"--chain",
+	"--extrinsic",
+	"--features",
+	"--header",
+	"--heap-pages",
+	"--output",
+	"--pallet",
+	"--repeat",
+	"--steps",
+	"-r",
+	".maintain/license-header",
+	"20",
+	"4096",
+	"50",
+	"@@split(NODE_COMPILE_ARGS, )",
+	"benchmark",
+	"pallet",
+	"run",
+	"runtime-benchmarks",
+	"runtime/${CHAIN}/src/weights",
+]
+command = "cargo"
+
+[tasks.run-benchmark-crab]
+env    = { "CHAIN" = "crab" }
+extend = "run-benchmark"
+
+[tasks.rbc]
+alias = "run-benchmark-crab"
+
+[tasks.run-benchmark-darwinia]
+env    = { "CHAIN" = "darwinia" }
+extend = "run-benchmark"
+
+[tasks.rbd]
+alias = "run-benchmark-darwinia"
+
+[tasks.run-benchmark-check]
+command = "cargo"
+args    = [
+	"run",
+	"@@split(NODE_COMPILE_ARGS, )",
+	"${CHAIN}-runtime",
+	"--features",
+	"runtime-benchmarks",
+	"-r",
+	"--",
+	"benchmark",
+	"pallet",
+	"--header",
+	".maintain/license-header",
+	"--heap-pages",
+	"4096",
+	"--chain",
+	"${CHAIN}-dev",
+	"--output",
+	"runtime/${CHAIN}/src/weights",
+	"--pallet",
+	"*",
+	"--extrinsic",
+	"*",
+	"--steps",
+	"2",
+	"--repeat",
+	"1"
+]
+
+[tasks.run-benchmark-crab-check]
+extend = "run-benchmark-check"
+env    = { "CHAIN" = "crab" }
+
+[tasks.rbcc]
+alias = "run-benchmark-crab-check"
+
+[tasks.run-benchmark-darwinia-check]
+extend = "run-benchmark-check"
+env    = { "CHAIN" = "darwinia" }
+
+[tasks.rbdc]
+alias = "run-benchmark-darwinia-check"
